@@ -1,3 +1,18 @@
+## Demo Video
+
+A short demonstration of the ReachInbox Email Scheduler:
+
+- Google OAuth login
+- Dashboard
+- Compose and schedule emails
+- Scheduled and sent emails
+- Ethereal email preview
+- Restart recovery
+- Rate limiting / minimum delay
+
+[Watch the Demo Video](https://drive.google.com/file/d/1QwKpc7NCZm20vLTWj-coYPEwH09orgzR/view?usp=sharing)
+
+
 # ReachInbox Email Scheduler
 
 A production-style email scheduler: Express + BullMQ + Redis + Postgres backend,
@@ -203,16 +218,4 @@ None of these are hardcoded in application logic — all read from `config/env.t
 | 32–35 | Write up README notes on any deviations, record a short demo, buffer for surprises |
 
 
-## Demo Video
 
-A short demonstration of the ReachInbox Email Scheduler:
-
-- Google OAuth login
-- Dashboard
-- Compose and schedule emails
-- Scheduled and sent emails
-- Ethereal email preview
-- Restart recovery
-- Rate limiting / minimum delay
-
-[Watch the Demo Video](https://drive.google.com/file/d/1QwKpc7NCZm20vLTWj-coYPEwH09orgzR/view?usp=sharing)
