@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EmailStatus {
+  PENDING     // stored, not yet picked up / waiting for its scheduled time
+  QUEUED      // has an active BullMQ delayed job
+  RATE_DELAYED // hit the hourly limit, pushed to a later window
+  SENT
+  FAILED
+}
+
+// A user who authenticated via Google. Owns campaigns.
+model User {
+  id        String     @id @default(uuid())
+  googleId  String     @unique
+  email     String     @unique
+  name      String
+  avatarUrl String?
+  createdAt DateTime   @default(now())
+  campaigns Campaign[]
+}
+
+// A sending identity (Ethereal test account). Rate limiting is scoped per sender.
+model Sender {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  smtpHost     String
+  smtpPort     Int
+  smtpUser     String
+  smtpPass     String
+  createdAt    DateTime @default(now())
+  emails       EmailJob[]
+}
+
+// One "compose" action = one campaign = many EmailJob rows (one per recipient).
+model Campaign {
+  id               String   @id @default(uuid())
+  userId           String
+  subject          String
+  body             String
+  startTime        DateTime // when the first email should go out
+  delayMs          Int      // min delay between individual sends, ms
+  hourlyLimit      Int      // max emails/hour enforced per sender for this campaign
+  totalRecipients  Int
+  createdAt        DateTime @default(now())
+
+  user             User       @relation(fields: [userId], references: [id])
+  emails           EmailJob[]
+}
+
+// One row per recipient. This is the source of truth the worker reconciles against.
+model EmailJob {
+  id            String      @id @default(uuid())
+  campaignId    String
+  senderId      String
+  toEmail       String
+  subject       String
+  body          String
+
+  scheduledAt   DateTime    // next time this job should fire
+  status        EmailStatus @default(PENDING)
+  attempts      Int         @default(0)
+  lastError     String?
+  sentAt        DateTime?
+
+  // bullJobId lets us find/dedupe the corresponding BullMQ job on reconciliation.
+  bullJobId     String?     @unique
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  campaign      Campaign    @relation(fields: [campaignId], references: [id])
+  sender        Sender      @relation(fields: [senderId], references: [id])
+
+  @@index([status, scheduledAt])
+  @@index([senderId, status])
+}
